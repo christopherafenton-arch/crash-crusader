@@ -297,9 +297,7 @@ footer{text-align:center;padding:18px;color:var(--muted);font-size:11px;border-t
 
       <button class="btn-p" id="btnUnlock" onclick="proceedToPayment()" disabled style="font-size:20px;padding:18px;">Unlock My Full Report — $69</button>
       <div style="font-size:11px;color:#444;margin-top:10px;">One-time fee · Instant delivery · 100% money-back if your offer doesn't improve</div>
-      <div style="margin-top:16px;padding-top:16px;border-top:1px solid #2a2a2a;">
-        <input type="text" id="betaCode" placeholder="Beta access code" autocomplete="off" autocorrect="off" autocapitalize="off" style="background:#1a1a1a;border:1.5px solid #333;color:#aaa;padding:12px 14px;border-radius:6px;font-family:'Barlow',sans-serif;font-size:14px;width:100%;outline:none;display:block;" oninput="chkBeta()">
-      </div>
+
     </div>
   </div>
 
@@ -448,18 +446,13 @@ function showTeaser() {
 }
 
 function proceedToPayment() {
-  // Save lead data
   leadData.name = document.getElementById('leadName').value.trim();
   leadData.email = document.getElementById('leadEmail').value.trim();
-
-  // TODO: Send lead to your CRM/email here before payment
-  // For now log it so you can see it during beta
   console.log('LEAD CAPTURED:', leadData.name, leadData.email, D.year, D.make, D.model, D.state);
-
-  // TODO: Replace with Stripe payment link
-  // For beta testing — go straight to report
   buildCase();
 }
+
+function chkBeta() {}
 
 async function fetchMCComps(cpoCase) {
   var make = encodeURIComponent(D.make);
@@ -771,8 +764,10 @@ async function buildCase() {
     txt = txt.replace(/```json|```/g,'').trim();
     var parsed;
     try { parsed = JSON.parse(txt); } catch(e) { parsed = fallback(); }
+    clearTimeout(safetyTimer);
     render(parsed, cpoCase, cpoWarnings, mcComps);
   } catch(e) {
+    clearTimeout(safetyTimer);
     clearInterval(loadTimer);
     render(fallback(), cpoCase, cpoWarnings, mcComps);
   }
