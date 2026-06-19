@@ -811,27 +811,55 @@ async function buildCase() {
   try {
     document.getElementById('loadSt').textContent = 'Searching live market data...';
 
-    var controller = new AbortController();
-    var apiTimeout = setTimeout(function(){ controller.abort(); }, 45000);
-
-    // Send to server-side Netlify function — avoids CORS, enables web search
+    // Start background job
     var payload = Object.assign({}, D, { cpoCase: cpoCase });
-    var rr = await fetch('/.netlify/functions/report', {
+    var startRes = await fetch('/.netlify/functions/report-start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      signal: controller.signal,
       body: JSON.stringify(payload)
     });
+    var startData = await startRes.json();
+    var jobId = startData.jobId;
 
-    clearTimeout(apiTimeout);
+    if (!jobId) {
+      clearTimeout(safetyTimer);
+      clearInterval(loadTimer);
+      render(fallback(), cpoCase, cpoWarnings, mcComps);
+      return;
+    }
+
+    // Poll for completion every 3 seconds, up to 90 seconds total
+    var parsed = null;
+    var pollAttempts = 0;
+    var maxPolls = 30;
+
+    while (pollAttempts < maxPolls) {
+      await new Promise(function(resolve){ setTimeout(resolve, 3000); });
+      pollAttempts++;
+
+      try {
+        var statusRes = await fetch('/.netlify/functions/report-status?jobId=' + encodeURIComponent(jobId));
+        var statusData = await statusRes.json();
+
+        if (statusData.status === 'done' && statusData.result) {
+          parsed = statusData.result;
+          break;
+        }
+        if (statusData.status === 'error') {
+          console.log('Report job error:', statusData.error);
+          break;
+        }
+        // still pending — update loading text to show progress
+        document.getElementById('loadSt').textContent = 'Searching live market data... (' + pollAttempts + ')';
+      } catch(e) {
+        console.log('Poll error:', e.message);
+      }
+    }
+
     clearTimeout(safetyTimer);
     clearInterval(loadTimer);
 
-    var parsed;
-    try {
-      parsed = await rr.json();
-      if (parsed.error || !parsed.estimatedLowValue) parsed = fallback();
-    } catch(e) { parsed = fallback(); }
+    if (!parsed || !parsed.estimatedLowValue) parsed = fallback();
     render(parsed, cpoCase, cpoWarnings, mcComps);
 
   } catch(e) {
