@@ -58,12 +58,12 @@ exports.handler = async function(event) {
       '\nSTATE: ' + (D.state || 'MA') +
       (D.vin ? '\nVIN: ' + D.vin : '') +
       '\n\nINSTRUCTIONS:' +
-      '\n1. Search for current retail listings: "' + yr + ' ' + mk + ' ' + mo + (tr ? ' ' + tr : '') + ' for sale"' +
-      '\n2. Find real asking prices from CarGurus, AutoTrader, Cars.com, or dealer sites.' +
-      (cpoCase ? '\n3. Also search for CPO listings specifically since this was purchased new/CPO.' : '') +
-      '\n4. Determine true fair market value range based ONLY on real listings — ignore the insurance offer entirely when valuing.' +
-      '\n5. If the offer is within 5% of fair value, say so honestly — case strength should be "Fair Offer".' +
-      '\n6. If offer is 5-15% below fair value = Moderate. 15%+ below = Strong.' +
+      '\n1. Do ONE web search for: "' + yr + ' ' + mk + ' ' + mo + (tr ? ' ' + tr : '') + ' for sale"' +
+      '\n2. From those results, extract 3-5 real asking prices.' +
+      '\n3. Determine fair market value range based on what you find — ignore the insurance offer when valuing.' +
+      '\n4. If the offer is within 5% of fair value, say so honestly — case strength should be "Fair Offer".' +
+      '\n5. If offer is 5-15% below fair value = Moderate. 15%+ below = Strong.' +
+      '\n6. Be fast and decisive — do not search multiple times.' +
       '\n\nReturn ONLY valid JSON, no other text:' +
       '\n{' +
       '\n  "estimatedLowValue": <number>,' +
@@ -85,8 +85,8 @@ exports.handler = async function(event) {
 
     const payload = {
       model: 'claude-sonnet-4-6',
-      max_tokens: 2000,
-      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+      max_tokens: 1500,
+      tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 2 }],
       messages: [{ role: 'user', content: prompt }]
     };
 
