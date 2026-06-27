@@ -298,6 +298,20 @@ footer{text-align:center;padding:18px;color:var(--muted);font-size:11px;border-t
       <button class="btn-p" id="btnUnlock" onclick="proceedToPayment()" disabled style="font-size:20px;padding:18px;">Unlock My Full Report — $69</button>
       <div style="font-size:11px;color:#444;margin-top:10px;">One-time fee · Instant delivery · 100% money-back if your offer doesn't improve</div>
 
+      <div id="teaserInjuryBox" style="display:none;background:#2a1414;border:1px solid #5a2a2a;border-radius:10px;padding:18px;margin-top:20px;text-align:left;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:#ff6b6b;margin-bottom:8px;">⚠ You May Have an Injury Claim</div>
+        <div style="font-size:13px;color:#d0bcbc;margin-bottom:14px;">This is separate from your property dispute and could be worth significantly more. A free consultation costs you nothing.</div>
+        <div class="igrp" style="margin-bottom:10px;"><label>Phone Number</label><input type="tel" id="injPhone" placeholder="(555) 123-4567"></div>
+        <button class="btn-p" style="background:#ff3b30;font-size:14px;padding:12px;" onclick="captureInjuryLead()">Connect Me With a PI Attorney →</button>
+      </div>
+
+      <div id="teaserDealerBox" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px;margin-top:14px;text-align:left;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--orange);margin-bottom:8px;">Need a Replacement Vehicle?</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:14px;">Once you win your dispute, get connected with trusted local dealers — no pressure, no games.</div>
+        <div class="igrp" style="margin-bottom:10px;"><label>Phone Number</label><input type="tel" id="dealerPhone" placeholder="(555) 123-4567"></div>
+        <button class="btn-p" style="font-size:14px;padding:12px;" onclick="captureDealerLead()">Find a Trusted Dealer →</button>
+      </div>
+
     </div>
   </div>
 
@@ -447,6 +461,24 @@ function chkLead() {
   leadData.email = e;
 }
 
+function captureInjuryLead() {
+  var phone = document.getElementById('injPhone').value.trim();
+  if (!phone) { alert('Please enter a phone number so the attorney can reach you.'); return; }
+  console.log('PI LEAD CAPTURED:', leadData.name, leadData.email, phone, D.year, D.make, D.model, D.state);
+  // TODO: send to PI referral webhook/email endpoint
+  var box = document.getElementById('teaserInjuryBox');
+  box.innerHTML = '<div style="font-size:14px;color:#9ade9a;text-align:center;padding:10px 0;">✓ Thank you — a PI attorney partner will reach out shortly.</div>';
+}
+
+function captureDealerLead() {
+  var phone = document.getElementById('dealerPhone').value.trim();
+  if (!phone) { alert('Please enter a phone number so a dealer can reach you.'); return; }
+  console.log('DEALER LEAD CAPTURED:', leadData.name, leadData.email, phone, D.year, D.make, D.model, D.state);
+  // TODO: send to dealer referral webhook/email endpoint
+  var box = document.getElementById('teaserDealerBox');
+  box.innerHTML = '<div style="font-size:14px;color:#9ade9a;text-align:center;padding:10px 0;">✓ Thank you — a trusted local dealer will reach out shortly.</div>';
+}
+
 function calcTeaserUpside() {
   var offer = Number(D.offer);
   var miles = Number(D.miles);
@@ -504,6 +536,11 @@ function showTeaser() {
   if (cpoCase) {
     document.getElementById('teaserCPOLine').textContent = 'CPO replacement argument — forces insurer to use certified comparables only';
   }
+
+  // Show injury referral box if applicable (injured/possible AND not at fault)
+  var showInjuryBox = (D.injured === 'yes' || D.injured === 'possible') && D.fault !== 'yes';
+  var injBox = document.getElementById('teaserInjuryBox');
+  if (injBox) injBox.style.display = showInjuryBox ? 'block' : 'none';
 
   // Show teaser step
   document.getElementById('s8').classList.remove('active');
@@ -812,7 +849,11 @@ async function buildCase() {
     document.getElementById('loadSt').textContent = 'Searching live market data...';
 
     // Start background job
-    var payload = Object.assign({}, D, { cpoCase: cpoCase });
+    var payload = Object.assign({}, D, {
+      cpoCase: cpoCase,
+      cpoBrandInfo: cpoStatus.cpoBrand || null,
+      cpoWarnings: cpoWarnings
+    });
     var startRes = await fetch('/.netlify/functions/report-start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1144,6 +1185,13 @@ function render(r, cpoCase, cpoWarnings, mcComps) {
 
   var injHTML = injBanner ? '<div class="inj-box"><h3>⚠️ You May Have an Injury Claim</h3><p>You indicated injuries and were not at fault. This is separate from your property dispute — and could be worth significantly more. PI consultations are free.</p><button class="btn-d" onclick="alert(\'Attorney referral — coming soon.\')">Connect Me With a PI Attorney →</button></div>' : '';
 
+  var appraiserBanner = (r.caseStrength === 'Strong');
+  var appraiserHTML = appraiserBanner ? '<div class="scard" style="background:#1a1f2e;border:1px solid #2a3a5e;margin-bottom:14px;">'
+    + '<h3 style="color:#6ba3ff;">🔍 Insurer Won\'t Budge? Get an Independent Appraisal</h3>'
+    + '<p style="font-size:13px;color:var(--muted);margin-bottom:14px;">Most policies include an appraisal clause that lets you force a binding, independent valuation. A licensed independent auto appraiser can settle this dispute fast — connect with one in your area.</p>'
+    + '<button class="btn-d" style="background:#3a5e9e;" onclick="alert(\'Appraiser referral — coming soon.\')">Connect Me With an Independent Appraiser →</button>'
+    + '</div>' : '';
+
   // Build real comps table from MarketCheck data
   var compTableHTML = '';
   var allComps = (mcComps.cpo || []).concat(mcComps.nonCpo || []);
@@ -1180,7 +1228,7 @@ function render(r, cpoCase, cpoWarnings, mcComps) {
     + '<div style="margin-top:10px;display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);">'
     + 'Case Strength: <strong style="color:' + sc + '">' + r.caseStrength + '</strong> &nbsp;|&nbsp; ' + shortTxt
     + '</div></div>'
-    + compTableHTML + injHTML + taxFeesHTML + cpoHTML
+    + compTableHTML + injHTML + appraiserHTML + taxFeesHTML + cpoHTML
     + (function() {
       if (!r.realListings || r.realListings.length === 0) return '<div class="scard" id="compTableSection" style="display:none;"></div>';
       var rows = r.realListings.map(function(l) {
