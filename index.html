@@ -298,20 +298,6 @@ footer{text-align:center;padding:18px;color:var(--muted);font-size:11px;border-t
       <button class="btn-p" id="btnUnlock" onclick="proceedToPayment()" disabled style="font-size:20px;padding:18px;">Unlock My Full Report — $69</button>
       <div style="font-size:11px;color:#444;margin-top:10px;">One-time fee · Instant delivery · 100% money-back if your offer doesn't improve</div>
 
-      <div id="teaserInjuryBox" style="display:none;background:#2a1414;border:1px solid #5a2a2a;border-radius:10px;padding:18px;margin-top:20px;text-align:left;">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:#ff6b6b;margin-bottom:8px;">⚠ You May Have an Injury Claim</div>
-        <div style="font-size:13px;color:#d0bcbc;margin-bottom:14px;">This is separate from your property dispute and could be worth significantly more. A free consultation costs you nothing.</div>
-        <div class="igrp" style="margin-bottom:10px;"><label>Phone Number</label><input type="tel" id="injPhone" placeholder="(555) 123-4567"></div>
-        <button class="btn-p" style="background:#ff3b30;font-size:14px;padding:12px;" onclick="captureInjuryLead()">Connect Me With a PI Attorney →</button>
-      </div>
-
-      <div id="teaserDealerBox" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px;margin-top:14px;text-align:left;">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--orange);margin-bottom:8px;">Need a Replacement Vehicle?</div>
-        <div style="font-size:13px;color:var(--muted);margin-bottom:14px;">Once you win your dispute, get connected with trusted local dealers — no pressure, no games.</div>
-        <div class="igrp" style="margin-bottom:10px;"><label>Phone Number</label><input type="tel" id="dealerPhone" placeholder="(555) 123-4567"></div>
-        <button class="btn-p" style="font-size:14px;padding:12px;" onclick="captureDealerLead()">Find a Trusted Dealer →</button>
-      </div>
-
     </div>
   </div>
 
@@ -333,10 +319,12 @@ footer{text-align:center;padding:18px;color:var(--muted);font-size:11px;border-t
 </footer>
 
 <script>
+// Check if returning from Stripe payment
 window.addEventListener('load', function() {
   var urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('paid') === 'true') {
     try {
+      // Try localStorage first, then sessionStorage, then cookies
       var savedData = null;
       var savedLead = null;
 
@@ -349,6 +337,7 @@ window.addEventListener('load', function() {
       }
 
       if (!savedData) {
+        // Try cookies
         var cookies = document.cookie.split(';');
         cookies.forEach(function(c) {
           var parts = c.trim().split('=');
@@ -364,11 +353,13 @@ window.addEventListener('load', function() {
         Object.assign(D, parsed);
         if (savedLead) Object.assign(leadData, JSON.parse(savedLead));
 
+        // Clear all storage
         try { localStorage.removeItem('ccData'); localStorage.removeItem('ccLead'); } catch(e) {}
         try { sessionStorage.removeItem('ccData'); sessionStorage.removeItem('ccLead'); } catch(e) {}
         document.cookie = 'ccData=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
         document.cookie = 'ccLead=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
 
+        // Hide hero and all steps, show loading
         var hero = document.querySelector('.hero');
         if (hero) hero.style.display = 'none';
         document.getElementById('pf').style.width = '95%';
@@ -378,6 +369,7 @@ window.addEventListener('load', function() {
         loadTimer = setInterval(tickLoad, 800);
         setTimeout(buildCase, 800);
       } else {
+        // No data found — show a message asking them to retry
         var hero = document.querySelector('.hero');
         if (hero) {
           hero.innerHTML = '<div style="padding:40px 20px;text-align:center;">'
@@ -400,6 +392,10 @@ var D = {
   fault:null, injured:null, offer:null, carrier:null, state:null
 };
 
+// CPO eligibility: maxMiles = max odometer AT TIME OF CERTIFICATION (not current mileage)
+// maxAge = max model years old at time of certification
+// For total loss disputes: if vehicle was PURCHASED as CPO, it met these standards at time of purchase
+// The relevant question is: did the mileage AT TIME OF PURCHASE meet the CPO program threshold?
 var CPO = {
   hyundai:   {maxMiles:80000,  maxAge:7,  warranty:"10-year/100,000-mile powertrain warranty from original in-service date", note:"Hyundai CPO eligibility requires under 80,000 miles and under 7 years old at time of certification. The program carries a 10-year/100,000-mile powertrain warranty from original in-service date — a benefit non-certified replacements cannot replicate."},
   kia:       {maxMiles:80000,  maxAge:6,  warranty:"10-year/100,000-mile powertrain warranty from original in-service date", note:"Kia CPO eligibility requires under 80,000 miles and under 6 years old at certification. The program carries a 10-year/100,000-mile powertrain warranty from original in-service date — unavailable on non-certified replacements."},
@@ -430,8 +426,17 @@ var CPO = {
   cadillac:  {maxMiles:100000, maxAge:6,  warranty:"12-month/12,000-mile bumper-to-bumper plus powertrain coverage", note:"Cadillac CPO requires under 100,000 miles and under 6 years old. The program includes 12-month/12,000-mile bumper-to-bumper plus powertrain warranty — not available on non-certified replacements."}
 };
 
-var MC_API_KEY = 'mc_live_MCG1g62XE7kFVKRpnkvokBKecqnc5DOS';
+// API Key moved to Netlify environment variables
 var leadData = { name: '', email: '' };
+
+function chkBeta() {
+  var code = document.getElementById('betaCode') && document.getElementById('betaCode').value.trim();
+  if (code === 'CC2026BETA') {
+    leadData.name = document.getElementById('leadName').value.trim() || 'Beta Tester';
+    leadData.email = document.getElementById('leadEmail').value.trim() || 'beta@crashcrusader.com';
+    buildCase();
+  }
+}
 
 function chkLead() {
   var n = document.getElementById('leadName') && document.getElementById('leadName').value.trim();
@@ -442,41 +447,30 @@ function chkLead() {
   leadData.email = e;
 }
 
-function captureInjuryLead() {
-  var phone = document.getElementById('injPhone').value.trim();
-  if (!phone) { alert('Please enter a phone number so the attorney can reach you.'); return; }
-  console.log('PI LEAD CAPTURED:', leadData.name, leadData.email, phone, D.year, D.make, D.model, D.state);
-  var box = document.getElementById('teaserInjuryBox');
-  box.innerHTML = '<div style="font-size:14px;color:#9ade9a;text-align:center;padding:10px 0;">✓ Thank you — a PI attorney partner will reach out shortly.</div>';
-}
-
-function captureDealerLead() {
-  var phone = document.getElementById('dealerPhone').value.trim();
-  if (!phone) { alert('Please enter a phone number so a dealer can reach you.'); return; }
-  console.log('DEALER LEAD CAPTURED:', leadData.name, leadData.email, phone, D.year, D.make, D.model, D.state);
-  var box = document.getElementById('teaserDealerBox');
-  box.innerHTML = '<div style="font-size:14px;color:#9ade9a;text-align:center;padding:10px 0;">✓ Thank you — a trusted local dealer will reach out shortly.</div>';
-}
-
 function calcTeaserUpside() {
   var offer = Number(D.offer);
   var miles = Number(D.miles);
   var cpoCase = isCPOCase();
 
+  // Base uplift percentage by condition
   var upliftPct = { excellent: 0.18, good: 0.14, fair: 0.09 }[D.condition] || 0.13;
 
+  // Mileage adjustment — lower miles = higher upside
   if (miles < 30000) upliftPct += 0.04;
   else if (miles < 60000) upliftPct += 0.02;
   else if (miles > 100000) upliftPct -= 0.02;
 
+  // CPO bump
   if (cpoCase) upliftPct += 0.05;
 
+  // Prior damage adjustment
   if (D.prior === 'yes') upliftPct -= 0.04;
   else if (D.prior === 'none') upliftPct += 0.01;
 
   var low = Math.round((offer * upliftPct) / 100) * 100;
   var high = Math.round((offer * (upliftPct + 0.07)) / 100) * 100;
 
+  // Make the numbers look real not rounded
   low = low - 50;
   high = high + 150;
 
@@ -484,16 +478,20 @@ function calcTeaserUpside() {
 }
 
 function showTeaser() {
+  // Save step 8 data
   D.offer   = document.getElementById('f_offer').value;
   D.carrier = document.getElementById('f_carrier').value;
   D.state   = document.getElementById('f_state').value;
 
+  // Calculate teaser — no API calls
   var upside = calcTeaserUpside();
   var cpoCase = isCPOCase();
 
+  // Populate teaser screen
   document.getElementById('teaserVehicle').textContent = D.year + ' ' + D.make + ' ' + D.model + (D.trim ? ' ' + D.trim : '');
   document.getElementById('teaserAmount').textContent = '$' + upside.low.toLocaleString() + ' – $' + upside.high.toLocaleString();
 
+  // Build reason bullets
   var reasons = [];
   if (cpoCase) reasons.push('⚡ CPO replacement argument applies — insurers must use certified comparables');
   if (D.condition === 'excellent') reasons.push('✓ Excellent condition vehicles command premium market value');
@@ -502,14 +500,12 @@ function showTeaser() {
   reasons.push('✓ Current offer of $' + Number(D.offer).toLocaleString() + ' does not reflect actual market data');
   document.getElementById('teaserReasons').innerHTML = reasons.join('<br>');
 
+  // CPO line
   if (cpoCase) {
     document.getElementById('teaserCPOLine').textContent = 'CPO replacement argument — forces insurer to use certified comparables only';
   }
 
-  var showInjuryBox = (D.injured === 'yes' || D.injured === 'possible') && D.fault !== 'yes';
-  var injBox = document.getElementById('teaserInjuryBox');
-  if (injBox) injBox.style.display = showInjuryBox ? 'block' : 'none';
-
+  // Show teaser step
   document.getElementById('s8').classList.remove('active');
   document.getElementById('sTeaser').classList.add('active');
   document.getElementById('pf').style.width = '90%';
@@ -519,11 +515,13 @@ function showTeaser() {
 function proceedToPayment() {
   leadData.name = document.getElementById('leadName').value.trim();
   leadData.email = document.getElementById('leadEmail').value.trim();
+  // Make sure offer, carrier, state are saved in D before redirect
   D.offer   = document.getElementById('f_offer').value;
   D.carrier = document.getElementById('f_carrier').value;
   D.state   = document.getElementById('f_state').value;
   console.log('LEAD CAPTURED:', leadData.name, leadData.email, D.year, D.make, D.model, D.state);
 
+  // Store in multiple places for redundancy
   var dataStr = JSON.stringify(D);
   var leadStr = JSON.stringify(leadData);
   try { localStorage.setItem('ccData', dataStr); } catch(e) {}
@@ -531,14 +529,20 @@ function proceedToPayment() {
   try { sessionStorage.setItem('ccData', dataStr); } catch(e) {}
   try { sessionStorage.setItem('ccLead', leadStr); } catch(e) {}
 
+  // Set cookies as final fallback (survive cross-domain redirects)
   var expires = new Date(Date.now() + 30*60*1000).toUTCString();
   document.cookie = 'ccData=' + encodeURIComponent(dataStr) + '; expires=' + expires + '; path=/; SameSite=Lax';
   document.cookie = 'ccLead=' + encodeURIComponent(leadStr) + '; expires=' + expires + '; path=/; SameSite=Lax';
 
+  // Redirect to Stripe
   var stripeUrl = 'https://buy.stripe.com/test_fZu6oz0I19LneC8dRPeEo00';
   stripeUrl += '?prefilled_email=' + encodeURIComponent(leadData.email);
   window.location.href = stripeUrl;
 }
+
+function chkBeta() {}
+
+// fetchMCComps removed, now using /.netlify/functions/comps proxy
 
 function getCPO() {
   var mk = (D.make||'').toLowerCase().trim();
@@ -549,9 +553,12 @@ function isCPOCase() {
   var cpoBrand = getCPO();
   if (!cpoBrand) return false;
   if (D.purchaseType !== 'cpo' && D.purchaseType !== 'new') return false;
-  return true;
+  return true; // Purchased as CPO/new means it met requirements at time of purchase
 }
 
+// Check if current mileage exceeds the CPO powertrain warranty coverage
+// This is different from eligibility — the warranty may still be active even at high mileage
+// if it was within limits when purchased
 function getCPOStatus() {
   var cpoBrand = getCPO();
   if (!cpoBrand) return {eligible:false, reason:'Brand does not have a manufacturer CPO program.'};
@@ -562,9 +569,14 @@ function getCPOStatus() {
   var currentYear = new Date().getFullYear();
   var vehicleAge = currentYear - yr;
 
+  // Check if mileage at time of accident exceeds what the powertrain warranty covers
+  // For Hyundai/Kia: 10yr/100k — if over 100k miles the powertrain warranty is expired
+  // For others: check their specific limits
   var warnings = [];
 
   if (cpoBrand.maxMiles && miles > cpoBrand.maxMiles) {
+    // Over the original CPO eligibility mileage — warranty may be expired
+    // But the CPO argument about replacement comparables still holds
     warnings.push('Note: At ' + miles.toLocaleString() + ' miles, this vehicle has exceeded the ' + cpoBrand.maxMiles.toLocaleString() + '-mile original CPO eligibility threshold. The powertrain warranty coverage from the CPO program may have expired. The comp replacement argument may be weaker but still worth raising.');
   }
 
@@ -674,6 +686,7 @@ function tickLoad() {
 }
 
 async function buildCase() {
+  // Only read form fields if not returning from payment (fields will be empty after redirect)
   var fromPayment = new URLSearchParams(window.location.search).get('paid') === 'true';
   if (!fromPayment) {
     D.offer   = document.getElementById('f_offer').value;
@@ -693,6 +706,7 @@ async function buildCase() {
   var cpoWarnings = cpoStatus.warnings || [];
   var mcComps = { cpo: [], nonCpo: [], priceEstimate: null };
 
+  // Safety timeout — show fallback after 25 seconds no matter what
   var safetyTimer = setTimeout(function() {
     clearInterval(loadTimer);
     document.getElementById('sLoad').classList.remove('active');
@@ -702,40 +716,191 @@ async function buildCase() {
   try {
     document.getElementById('loadSt').textContent = 'Searching live market data...';
 
-    var payload = Object.assign({}, D, {
-      cpoCase: cpoCase,
-      cpoBrandInfo: cpoStatus.cpoBrand || null,
-      cpoWarnings: cpoWarnings
-    });
-
-    var controller = new AbortController();
-    var apiTimeout = setTimeout(function(){ controller.abort(); }, 24000);
-
-    var rr = await fetch('/.netlify/functions/report', {
+    // Start background job
+    var payload = Object.assign({}, D, { cpoCase: cpoCase });
+    var startRes = await fetch('/.netlify/functions/report-start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      signal: controller.signal,
       body: JSON.stringify(payload)
     });
+    var startData = await startRes.json();
+    var jobId = startData.jobId;
 
-    clearTimeout(apiTimeout);
+    if (!jobId) {
+      clearTimeout(safetyTimer);
+      clearInterval(loadTimer);
+      render(fallback(), cpoCase, cpoWarnings, mcComps);
+      return;
+    }
+
+    // Poll for completion every 3 seconds, up to 90 seconds total
+    var parsed = null;
+    var pollAttempts = 0;
+    var maxPolls = 30;
+
+    while (pollAttempts < maxPolls) {
+      await new Promise(function(resolve){ setTimeout(resolve, 3000); });
+      pollAttempts++;
+
+      try {
+        var statusRes = await fetch('/.netlify/functions/report-status?jobId=' + encodeURIComponent(jobId));
+        var statusData = await statusRes.json();
+
+        if (statusData.status === 'done' && statusData.result) {
+          parsed = statusData.result;
+          break;
+        }
+        if (statusData.status === 'error') {
+          console.log('Report job error:', statusData.error);
+          break;
+        }
+        // still pending — update loading text to show progress
+        document.getElementById('loadSt').textContent = 'Searching live market data... (' + pollAttempts + ')';
+      } catch(e) {
+        console.log('Poll error:', e.message);
+      }
+    }
+
     clearTimeout(safetyTimer);
     clearInterval(loadTimer);
 
-    var parsed;
-    try {
-      parsed = await rr.json();
-      if (parsed.error || !parsed.estimatedLowValue) parsed = fallback();
-    } catch(e) { parsed = fallback(); }
-
+    if (!parsed || !parsed.estimatedLowValue) parsed = fallback();
     render(parsed, cpoCase, cpoWarnings, mcComps);
 
   } catch(e) {
     clearTimeout(safetyTimer);
     clearInterval(loadTimer);
     render(fallback(), cpoCase, cpoWarnings, mcComps);
+    fetchCompsAndPopulate(cpoCase);
   }
 }
+
+async function fetchCompsAndPopulate(cpoCase) {
+  try {
+    var compParams = '?year=' + encodeURIComponent(D.year)
+      + '&make=' + encodeURIComponent(D.make)
+      + '&model=' + encodeURIComponent(D.model)
+      + '&trim=' + encodeURIComponent(D.trim || '')
+      + '&miles=' + encodeURIComponent(D.miles)
+      + '&state=' + encodeURIComponent(D.state === 'other' ? '' : D.state)
+      + '&cpo=' + (cpoCase ? 'true' : 'false');
+
+    var controller = new AbortController();
+    setTimeout(function(){ controller.abort(); }, 8000);
+
+    var compRes = await fetch('/.netlify/functions/comps' + compParams, { signal: controller.signal });
+    if (!compRes.ok) return;
+
+    var comps = await compRes.json();
+    if (!comps) return;
+
+    // Populate CPO calculator fields with real data
+    var cpoList = comps.cpo || [];
+    var ncpoList = comps.nonCpo || [];
+
+    cpoList.slice(0,3).forEach(function(c, i) {
+      var el = document.getElementById('c' + (i+1));
+      if (el && c.price > 0) { el.value = c.price; el.style.borderColor = 'var(--success)'; }
+    });
+
+    ncpoList.slice(0,3).forEach(function(c, i) {
+      var el = document.getElementById('n' + (i+1));
+      if (el && c.price > 0) { el.value = c.price; el.style.borderColor = 'var(--orange)'; }
+    });
+
+    // Update the comp table if it exists
+    var compTable = document.getElementById('compTableSection');
+    if (compTable && (cpoList.length > 0 || ncpoList.length > 0)) {
+      var allComps = cpoList.concat(ncpoList);
+      var rows = allComps.map(function(c) {
+        var isCPO = cpoList.indexOf(c) >= 0;
+        return '<tr style="border-bottom:1px solid var(--border);">'
+          + '<td style="padding:8px 10px;font-size:12px;">'
+          + (isCPO ? '<span style="background:var(--orange);color:#000;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;margin-right:4px;">CPO</span>' : '')
+          + (c.source || 'Dealer') + (c.city ? ', ' + c.city : '') + '</td>'
+          + '<td style="padding:8px 10px;font-size:12px;color:var(--muted);">' + Number(c.miles).toLocaleString() + ' mi</td>'
+          + '<td style="padding:8px 10px;font-size:13px;font-weight:700;font-family:Barlow Condensed,sans-serif;color:var(--success);">$' + Number(c.price).toLocaleString() + '</td>'
+          + '</tr>';
+      }).join('');
+
+      compTable.innerHTML = '<h3>Live Market Comparables <span style="font-size:10px;background:var(--success);color:#000;padding:2px 6px;border-radius:3px;">MARKETCHECK LIVE</span></h3>'
+        + '<table style="width:100%;border-collapse:collapse;">'
+        + '<tr style="border-bottom:1px solid var(--border);"><th style="padding:6px 10px;font-size:10px;text-align:left;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);">Dealer</th><th style="padding:6px 10px;font-size:10px;text-align:left;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);">Miles</th><th style="padding:6px 10px;font-size:10px;text-align:left;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);">Price</th></tr>'
+        + rows + '</table>'
+        + '<div style="font-size:11px;color:#444;margin-top:8px;">Source: MarketCheck live dealer inventory · ' + allComps.length + ' listings found</div>';
+      compTable.style.display = 'block';
+    }
+
+    // Auto-calculate spread if we have both CPO and non-CPO
+    if (cpoList.length > 0 && ncpoList.length > 0) {
+      calcSpread();
+    }
+
+  } catch(e) {
+    // Silently fail — report already showing without comps
+    console.log('Comp fetch failed or timed out:', e.message);
+  }
+}
+
+
+function buildSearchQ(cpoCase) {
+  var yr = D.year, mk = D.make, mo = D.model, tr = D.trim||'', st = D.state;
+  var miles = Math.round(Number(D.miles)/10000)*10000;
+  if (cpoCase) {
+    return 'Search for current used car prices. I need two sets of listings:\n'
+      + '1. Search "' + yr + ' ' + mk + ' ' + mo + ' ' + tr + ' certified pre-owned CPO for sale" — find current asking prices from dealer listings.\n'
+      + '2. Search "' + yr + ' ' + mk + ' ' + mo + ' ' + tr + ' used for sale not certified" — find non-CPO asking prices.\n'
+      + 'Vehicle has ~' + miles.toLocaleString() + ' miles. State: ' + st + '.\n'
+      + 'List specific dollar prices found for CPO and non-CPO examples separately with the source site. If you find no prices say so clearly.';
+  } else {
+    return 'Search for current used car prices for a ' + yr + ' ' + mk + ' ' + mo + ' ' + tr
+      + ' with ~' + miles.toLocaleString() + ' miles in ' + st + '.\n'
+      + 'Search CarGurus, AutoTrader, Cars.com. List specific asking prices found and the source. If no prices found say so clearly.';
+  }
+}
+
+function buildPrompt(searchSummary, cpoCase) {
+  var cpoBrand = getCPO();
+  var offer = Number(D.offer);
+  var yr = D.year, mk = D.make, mo = D.model, tr = D.trim || '', mi = Number(D.miles).toLocaleString();
+  var condition = D.condition || 'good';
+  var purchaseType = D.purchase || 'used';
+  var priorAccidents = D.accidents || 'none';
+  var atFault = D.fault || 'no';
+  var state = D.state || 'MA';
+
+  return 'You are an expert auto insurance total loss analyst. Your job is to independently determine the fair market value of this vehicle using web search, then compare it to the insurance offer.' +
+    '\n\nVEHICLE: ' + yr + ' ' + mk + ' ' + mo + (tr ? ' ' + tr : '') +
+    '\nMILEAGE: ' + mi + ' miles' +
+    '\nCONDITION: ' + condition +
+    '\nPURCHASE TYPE: ' + purchaseType +
+    '\nPRIOR ACCIDENTS: ' + priorAccidents +
+    '\nINSURANCE OFFER: $' + offer.toLocaleString() +
+    '\nSTATE: ' + state +
+    (D.vin ? '\nVIN: ' + D.vin : '') +
+    '\n\nINSTRUCTIONS:' +
+    '\n1. Use web_search to find current retail listings for this EXACT vehicle (year, make, model, trim) within 200 miles. Search CarGurus, AutoTrader, Cars.com, and dealer sites.' +
+    '\n2. Search for: "' + yr + ' ' + mk + ' ' + mo + (tr ? ' ' + tr : '') + ' for sale"' +
+    '\n3. Find at least 3-5 real asking prices from actual listings.' +
+    (cpoCase ? '\n4. Also search specifically for CPO (certified pre-owned) listings of this vehicle since it was purchased new/CPO.' : '') +
+    '\n5. Based on REAL listing data, determine the true fair market value range INDEPENDENTLY - do not anchor on the insurance offer at all.' +
+    '\n6. If the insurance offer is within fair market range, say so honestly. Do not manufacture a dispute if the offer is fair.' +
+    '\n7. Assess case strength: if offer is within 5% of fair value = Weak case, 5-15% below = Moderate, 15%+ below = Strong.' +
+    '\n\nReturn ONLY a JSON object with NO other text:' +
+    '\n{' +
+    '\n  "estimatedLowValue": <number - low end of fair market range based on real listings>,' +
+    '\n  "estimatedHighValue": <number - high end of fair market range based on real listings>,' +
+    '\n  "caseStrength": "Strong"|"Moderate"|"Weak"|"Fair Offer",' +
+    '\n  "offerAssessment": "<one sentence - is this offer fair, low, or very low based on real data>",' +
+    '\n  "realListings": [{"price": <number>, "miles": <number>, "source": "<site>", "certified": <true/false>}],' +
+    '\n  "valuationBasis": "<2-3 sentences explaining how you determined the value based on actual listings found>",' +
+    '\n  "arguments": ["<argument 1>", "<argument 2>", "<argument 3>"],' +
+    '\n  "wordTrack": "<professional dispute script for calling the adjuster>",' +
+    '\n  "disputeLetter": "<formal written dispute letter ready to send>",' +
+    '\n  "nextSteps": ["<step 1>", "<step 2>", "<step 3>"]' +
+    '\n}';
+}
+
 
 function fallback() {
   var offer = Number(D.offer);
@@ -752,39 +917,43 @@ function fallback() {
   args.push({title:'Demand Adjuster Methodology', body:'You have the right to see exactly which comparables your adjuster used. Request this in writing — it often reveals errors or invalid vehicles.'});
   return {
     caseStrength:'Strong',
-    estimatedLowValue:low, estimatedHighValue:high,
+    estimatedLowValue:low, estimatedHighValue:high, shortfall:low-offer,
+    cpoBombshell:cpo,
+    cpoBombshellText: cpo && cpoBrand ? cpoBrand.note : '',
     arguments:args,
     wordTrack:'I am formally disputing my total loss offer of $' + Number(D.offer).toLocaleString() + ' for my ' + D.year + ' ' + D.make + ' ' + D.model + '. Based on NADA values and current market listings, fair market value is between $' + low.toLocaleString() + ' and $' + high.toLocaleString() + '. ' + (cpo ? 'Additionally, this vehicle was ' + (D.purchaseType==='new'?'purchased new':'Certified Pre-Owned') + ' — all comparable vehicles used in valuation must reflect CPO inventory only. ' : '') + 'Please provide in writing the methodology and specific vehicles used in your valuation, and revise your offer within 5 business days.',
-    nextSteps:[
+    keyActions:[
       cpo ? 'Pull 3 CPO and 3 non-CPO listings for the same vehicle within 150 miles — document the price spread' : 'Pull 3-5 current listings for your exact vehicle within 100 miles on CarGurus or AutoTrader',
       'Request your adjuster\'s valuation methodology and comps in writing',
       'Send all correspondence via email — never just phone calls',
       'Do not accept a revised offer on the first call — get it in writing first'
     ],
-    realListings:[]
+    foundComps:{cpo:[], nonCpo:[]}
   };
 }
 
-var STATE_FEES = {
-  MA: { salesTax: 0.0625, docFee: 799, titleFee: 5, regFee: 60, label: 'Massachusetts' },
-  CT: { salesTax: 0.0635, docFee: 399, titleFee: 25, regFee: 120, label: 'Connecticut' },
-  NY: { salesTax: 0.08,   docFee: 175, titleFee: 50, regFee: 90,  label: 'New York' },
-  RI: { salesTax: 0.07,   docFee: 299, titleFee: 20, regFee: 30,  label: 'Rhode Island' },
-  NH: { salesTax: 0.0,    docFee: 299, titleFee: 25, regFee: 55,  label: 'New Hampshire' },
-  VT: { salesTax: 0.06,   docFee: 199, titleFee: 15, regFee: 76,  label: 'Vermont' },
-  ME: { salesTax: 0.055,  docFee: 299, titleFee: 33, regFee: 35,  label: 'Maine' },
-  NJ: { salesTax: 0.06625,docFee: 499, titleFee: 60, regFee: 84,  label: 'New Jersey' },
-  PA: { salesTax: 0.06,   docFee: 499, titleFee: 58, regFee: 38,  label: 'Pennsylvania' },
-  FL: { salesTax: 0.06,   docFee: 950, titleFee: 75, regFee: 225, label: 'Florida' },
-  TX: { salesTax: 0.0625, docFee: 150, titleFee: 28, regFee: 51,  label: 'Texas' },
-  CA: { salesTax: 0.0725, docFee: 85,  titleFee: 21, regFee: 60,  label: 'California' },
-  other: { salesTax: 0.06, docFee: 399, titleFee: 30, regFee: 75, label: 'Your State' }
-};
-function calcTaxesAndFees(v, st) {
-  var f = STATE_FEES[st] || STATE_FEES['other'];
-  var t = Math.round(v * f.salesTax);
-  return { salesTax: t, docFee: f.docFee, titleFee: f.titleFee, regFee: f.regFee, total: t + f.docFee + f.titleFee + f.regFee, label: f.label, rate: (f.salesTax*100).toFixed(2) };
-}
+
+  var STATE_FEES = {
+    MA: { salesTax: 0.0625, docFee: 799, titleFee: 5, regFee: 60, label: 'Massachusetts' },
+    CT: { salesTax: 0.0635, docFee: 399, titleFee: 25, regFee: 120, label: 'Connecticut' },
+    NY: { salesTax: 0.08,   docFee: 175, titleFee: 50, regFee: 90,  label: 'New York' },
+    RI: { salesTax: 0.07,   docFee: 299, titleFee: 20, regFee: 30,  label: 'Rhode Island' },
+    NH: { salesTax: 0.0,    docFee: 299, titleFee: 25, regFee: 55,  label: 'New Hampshire' },
+    VT: { salesTax: 0.06,   docFee: 199, titleFee: 15, regFee: 76,  label: 'Vermont' },
+    ME: { salesTax: 0.055,  docFee: 299, titleFee: 33, regFee: 35,  label: 'Maine' },
+    NJ: { salesTax: 0.06625,docFee: 499, titleFee: 60, regFee: 84,  label: 'New Jersey' },
+    PA: { salesTax: 0.06,   docFee: 499, titleFee: 58, regFee: 38,  label: 'Pennsylvania' },
+    FL: { salesTax: 0.06,   docFee: 950, titleFee: 75, regFee: 225, label: 'Florida' },
+    TX: { salesTax: 0.0625, docFee: 150, titleFee: 28, regFee: 51,  label: 'Texas' },
+    CA: { salesTax: 0.0725, docFee: 85,  titleFee: 21, regFee: 60,  label: 'California' },
+    other: { salesTax: 0.06, docFee: 399, titleFee: 30, regFee: 75, label: 'Your State' }
+  };
+  function calcTaxesAndFees(v, st) {
+    var f = STATE_FEES[st] || STATE_FEES['other'];
+    var t = Math.round(v * f.salesTax);
+    return { salesTax: t, docFee: f.docFee, titleFee: f.titleFee, regFee: f.regFee, total: t + f.docFee + f.titleFee + f.regFee, label: f.label, rate: (f.salesTax*100).toFixed(2) };
+  }
+
 
 function render(r, cpoCase, cpoWarnings, mcComps) {
   cpoWarnings = cpoWarnings || [];
@@ -794,12 +963,12 @@ function render(r, cpoCase, cpoWarnings, mcComps) {
   var offer = Number(D.offer);
   var injBanner = (D.injured==='yes'||D.injured==='possible') && D.fault!=='yes';
   var sc = r.caseStrength==='Strong'?'var(--success)':r.caseStrength==='Moderate'?'var(--orange)':'var(--muted)';
-
   var shortfallCalc = (r.estimatedLowValue || 0) - offer;
   var shortTxt = shortfallCalc>0
     ? '<strong style="color:var(--danger)">$' + shortfallCalc.toLocaleString() + ' below fair value</strong>'
     : '<strong style="color:var(--success)">Offer appears within range — still verify with comps</strong>';
 
+  // Taxes and fees calculation
   var vehicleVal = r.estimatedLowValue || Number(D.offer) || 20000;
   var tf = calcTaxesAndFees(vehicleVal, D.state || 'other');
   var taxFeesHTML = '<div class="scard" style="margin-bottom:14px;">'
@@ -858,6 +1027,7 @@ function render(r, cpoCase, cpoWarnings, mcComps) {
       + '<div style="font-size:11px;color:#444;margin-top:8px;">Even 2 of each builds a defensible argument.</div>'
       + '</div></div>';
 
+    // Auto-fill CPO calculator — prefer real MC data, fall back to AI-found data
     setTimeout(function() {
       var cpoSource = (mcComps.cpo && mcComps.cpo.length > 0) ? mcComps.cpo : (fc.cpo || []);
       var ncpoSource = (mcComps.nonCpo && mcComps.nonCpo.length > 0) ? mcComps.nonCpo : (fc.nonCpo || []);
@@ -874,25 +1044,17 @@ function render(r, cpoCase, cpoWarnings, mcComps) {
   }
 
   var argsHTML = (r.arguments||[]).map(function(a){
-    if (typeof a === 'string') {
-      return '<div class="arg"><span class="arg-dot">→</span><div>' + a + '</div></div>';
-    }
-    return '<div class="arg"><span class="arg-dot">→</span><div><strong>' + a.title + ':</strong> ' + a.body + '</div></div>';
+    var val = typeof a === 'string' ? a : JSON.stringify(a);
+    return '<div class="arg"><span class="arg-dot">→</span><div>' + val + '</div></div>';
   }).join('');
 
-  var actHTML = (r.nextSteps||r.keyActions||[]).map(function(a){
+  var actHTML = (r.nextSteps || r.keyActions || []).map(function(a){
     return '<div class="arg"><span class="arg-dot">✓</span><div>' + a + '</div></div>';
   }).join('');
 
   var injHTML = injBanner ? '<div class="inj-box"><h3>⚠️ You May Have an Injury Claim</h3><p>You indicated injuries and were not at fault. This is separate from your property dispute — and could be worth significantly more. PI consultations are free.</p><button class="btn-d" onclick="alert(\'Attorney referral — coming soon.\')">Connect Me With a PI Attorney →</button></div>' : '';
 
-  var appraiserBanner = (r.caseStrength === 'Strong');
-  var appraiserHTML = appraiserBanner ? '<div class="scard" style="background:#1a1f2e;border:1px solid #2a3a5e;margin-bottom:14px;">'
-    + '<h3 style="color:#6ba3ff;">🔍 Insurer Won\'t Budge? Get an Independent Appraisal</h3>'
-    + '<p style="font-size:13px;color:var(--muted);margin-bottom:14px;">Most policies include an appraisal clause that lets you force a binding, independent valuation. A licensed independent auto appraiser can settle this dispute fast — connect with one in your area.</p>'
-    + '<button class="btn-d" style="background:#3a5e9e;" onclick="alert(\'Appraiser referral — coming soon.\')">Connect Me With an Independent Appraiser →</button>'
-    + '</div>' : '';
-
+  // Build real comps table from MarketCheck data
   var compTableHTML = '';
   var allComps = (mcComps.cpo || []).concat(mcComps.nonCpo || []);
   if (allComps.length > 0) {
@@ -928,7 +1090,7 @@ function render(r, cpoCase, cpoWarnings, mcComps) {
     + '<div style="margin-top:10px;display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);">'
     + 'Case Strength: <strong style="color:' + sc + '">' + r.caseStrength + '</strong> &nbsp;|&nbsp; ' + shortTxt
     + '</div></div>'
-    + compTableHTML + injHTML + appraiserHTML + taxFeesHTML + cpoHTML
+    + compTableHTML + injHTML + taxFeesHTML + cpoHTML
     + (function() {
       if (!r.realListings || r.realListings.length === 0) return '<div class="scard" id="compTableSection" style="display:none;"></div>';
       var rows = r.realListings.map(function(l) {
@@ -993,3 +1155,24 @@ function calcSpread() {
 </script>
 </body>
 </html>
+  var STATE_FEES = {
+    MA: { salesTax: 0.0625, docFee: 799, titleFee: 5, regFee: 60, label: 'Massachusetts' },
+    CT: { salesTax: 0.0635, docFee: 399, titleFee: 25, regFee: 120, label: 'Connecticut' },
+    NY: { salesTax: 0.08,   docFee: 175, titleFee: 50, regFee: 90,  label: 'New York' },
+    RI: { salesTax: 0.07,   docFee: 299, titleFee: 20, regFee: 30,  label: 'Rhode Island' },
+    NH: { salesTax: 0.0,    docFee: 299, titleFee: 25, regFee: 55,  label: 'New Hampshire' },
+    VT: { salesTax: 0.06,   docFee: 199, titleFee: 15, regFee: 76,  label: 'Vermont' },
+    ME: { salesTax: 0.055,  docFee: 299, titleFee: 33, regFee: 35,  label: 'Maine' },
+    NJ: { salesTax: 0.06625,docFee: 499, titleFee: 60, regFee: 84,  label: 'New Jersey' },
+    PA: { salesTax: 0.06,   docFee: 499, titleFee: 58, regFee: 38,  label: 'Pennsylvania' },
+    FL: { salesTax: 0.06,   docFee: 950, titleFee: 75, regFee: 225, label: 'Florida' },
+    TX: { salesTax: 0.0625, docFee: 150, titleFee: 28, regFee: 51,  label: 'Texas' },
+    CA: { salesTax: 0.0725, docFee: 85,  titleFee: 21, regFee: 60,  label: 'California' },
+    other: { salesTax: 0.06, docFee: 399, titleFee: 30, regFee: 75, label: 'Your State' }
+  };
+  function calcTaxesAndFees(v, st) {
+    var f = STATE_FEES[st] || STATE_FEES['other'];
+    var t = Math.round(v * f.salesTax);
+    return { salesTax: t, docFee: f.docFee, titleFee: f.titleFee, regFee: f.regFee, total: t + f.docFee + f.titleFee + f.regFee, label: f.label, rate: (f.salesTax*100).toFixed(2) };
+  }
+
