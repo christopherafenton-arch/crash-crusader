@@ -706,12 +706,12 @@ async function buildCase() {
   var cpoWarnings = cpoStatus.warnings || [];
   var mcComps = { cpo: [], nonCpo: [], priceEstimate: null };
 
-  // Safety timeout — show fallback after 25 seconds no matter what
+  // Safety timeout — show fallback after 100 seconds no matter what (matches 30 polls x 3s + buffer)
   var safetyTimer = setTimeout(function() {
     clearInterval(loadTimer);
     document.getElementById('sLoad').classList.remove('active');
     render(fallback(), cpoCase, cpoWarnings, mcComps);
-  }, 25000);
+  }, 100000);
 
   try {
     document.getElementById('loadSt').textContent = 'Searching live market data...';
