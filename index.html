@@ -399,17 +399,17 @@ var D = {
 var CPO = {
   hyundai:   {maxMiles:80000,  maxAge:7,  warranty:"10-year/100,000-mile powertrain warranty from original in-service date", note:"Hyundai CPO eligibility requires under 80,000 miles and under 7 years old at time of certification. The program carries a 10-year/100,000-mile powertrain warranty from original in-service date — a benefit non-certified replacements cannot replicate."},
   kia:       {maxMiles:80000,  maxAge:6,  warranty:"10-year/100,000-mile powertrain warranty from original in-service date", note:"Kia CPO eligibility requires under 80,000 miles and under 6 years old at certification. The program carries a 10-year/100,000-mile powertrain warranty from original in-service date — unavailable on non-certified replacements."},
-  toyota:    {maxMiles:85000,  maxAge:6,  warranty:"7-year/100,000-mile powertrain warranty from original in-service date", note:"Toyota Gold CPO eligibility requires under 85,000 miles and within 6 model years at certification. The program carries a 7-year/100,000-mile powertrain warranty from original in-service date — not available on non-certified vehicles."},
-  lexus:     {maxMiles:null,   maxAge:null, warranty:"6-year/unlimited-mile comprehensive warranty from original in-service date", note:"Lexus L/Certified includes a 6-year/unlimited-mile comprehensive warranty from the original purchase date with no mileage limit — a benefit non-certified replacements cannot match."},
-  honda:     {maxMiles:80000,  maxAge:5,  warranty:"7-year/100,000-mile powertrain warranty from original in-service date", note:"HondaTrue CPO eligibility requires under 80,000 miles within the first 5 years of service. The program carries a 7-year/100,000-mile powertrain warranty from original in-service date — not replicable with a non-certified replacement."},
-  acura:     {maxMiles:80000,  maxAge:6,  warranty:"7-year/100,000-mile powertrain warranty from original in-service date", note:"Acura Precision Certified requires under 80,000 miles and under 6 years old. The program carries a 7-year/100,000-mile powertrain warranty from original in-service date — unavailable on non-certified replacements."},
-  subaru:    {maxMiles:80000,  maxAge:5,  warranty:"7-year/100,000-mile powertrain warranty from original in-service date", note:"Subaru CPO eligibility requires under 80,000 miles and under 5 years old at certification. The program carries a 7-year/100,000-mile powertrain warranty from original in-service date — not available on non-certified used vehicles."},
-  mazda:     {maxMiles:80000,  maxAge:6,  warranty:"7-year/100,000-mile powertrain warranty from original in-service date", note:"Mazda CPO eligibility requires under 80,000 miles and within 6 model years at certification. The program carries a 7-year/100,000-mile powertrain warranty from original in-service date — non-certified replacements do not carry this coverage."},
+  toyota:    {maxMiles:85000,  maxAge:6,  warrantyTransfers:true, warranty:"7-year/100,000-mile powertrain warranty from original in-service date", note:"Toyota Gold CPO eligibility requires under 85,000 miles and within 6 model years at certification. The program carries a 7-year/100,000-mile powertrain warranty from original in-service date — not available on non-certified vehicles."},
+  lexus:     {maxMiles:null,   maxAge:null, warrantyTransfers:true, warranty:"6-year/unlimited-mile comprehensive warranty from original in-service date", note:"Lexus L/Certified includes a 6-year/unlimited-mile comprehensive warranty from the original purchase date with no mileage limit — a benefit non-certified replacements cannot match."},
+  honda:     {maxMiles:80000,  maxAge:5,  warrantyTransfers:true, warranty:"7-year/100,000-mile powertrain warranty from original in-service date", note:"HondaTrue CPO eligibility requires under 80,000 miles within the first 5 years of service. The program carries a 7-year/100,000-mile powertrain warranty from original in-service date — not replicable with a non-certified replacement."},
+  acura:     {maxMiles:80000,  maxAge:6,  warrantyTransfers:true, warranty:"7-year/100,000-mile powertrain warranty from original in-service date", note:"Acura Precision Certified requires under 80,000 miles and under 6 years old. The program carries a 7-year/100,000-mile powertrain warranty from original in-service date — unavailable on non-certified replacements."},
+  subaru:    {maxMiles:80000,  maxAge:5,  warrantyTransfers:true, warranty:"7-year/100,000-mile powertrain warranty from original in-service date", note:"Subaru CPO eligibility requires under 80,000 miles and under 5 years old at certification. The program carries a 7-year/100,000-mile powertrain warranty from original in-service date — not available on non-certified used vehicles."},
+  mazda:     {maxMiles:80000,  maxAge:6,  warrantyTransfers:true, warranty:"7-year/100,000-mile powertrain warranty from original in-service date", note:"Mazda CPO eligibility requires under 80,000 miles and within 6 model years at certification. The program carries a 7-year/100,000-mile powertrain warranty from original in-service date — non-certified replacements do not carry this coverage."},
   bmw:       {maxMiles:60000,  maxAge:5,  warranty:"1-year/unlimited-mile warranty after original 4-year/50,000-mile new car warranty", note:"BMW CPO eligibility requires under 60,000 miles and under 5 years old. The program adds 1-year/unlimited-mile warranty coverage after the original new car warranty expires — a material benefit lost without a CPO replacement."},
   mercedes:  {maxMiles:null,   maxAge:6,  warranty:"1-year/unlimited-mile warranty extension", note:"Mercedes-Benz CPO includes a 1-year/unlimited-mile warranty extension beyond remaining factory coverage — a benefit non-certified replacements do not carry."},
   'mercedes-benz': {maxMiles:null, maxAge:6, warranty:"1-year/unlimited-mile warranty extension", note:"Mercedes-Benz CPO includes a 1-year/unlimited-mile warranty extension beyond remaining factory coverage — a benefit non-certified replacements do not carry."},
   audi:      {maxMiles:null,   maxAge:6,  warranty:"2-year/unlimited-mile limited warranty", note:"Audi CPO includes a 2-year/unlimited-mile limited warranty — coverage non-certified replacements cannot provide."},
-  ford:      {maxMiles:80000,  maxAge:6,  warranty:"12-month/12,000-mile bumper-to-bumper plus powertrain coverage", note:"Ford Blue Advantage CPO requires under 80,000 miles and under 6 years old. The program includes 12-month/12,000-mile bumper-to-bumper warranty plus powertrain coverage — not available on non-certified replacements."},
+  ford:      {maxMiles:80000,  maxAge:6,  warrantyTransfers:true, warranty:"12-month/12,000-mile bumper-to-bumper plus powertrain coverage", note:"Ford Blue Advantage CPO requires under 80,000 miles and under 6 years old. The program includes 12-month/12,000-mile bumper-to-bumper warranty plus powertrain coverage — not available on non-certified replacements."},
   lincoln:   {maxMiles:80000,  maxAge:6,  warranty:"12-month/12,000-mile bumper-to-bumper plus powertrain coverage", note:"Lincoln CPO requires under 80,000 miles and under 6 years old. The program includes 12-month/12,000-mile bumper-to-bumper plus powertrain coverage unavailable on non-certified vehicles."},
   chevrolet: {maxMiles:100000, maxAge:10, warranty:"12-month/12,000-mile bumper-to-bumper warranty", note:"GM CarBravo CPO (Chevrolet) requires under 100,000 miles and under 10 years old. The program includes a 12-month/12,000-mile bumper-to-bumper warranty on top of any remaining factory coverage — not present in non-certified replacements."},
   gmc:       {maxMiles:100000, maxAge:10, warranty:"12-month/12,000-mile bumper-to-bumper warranty", note:"GM CarBravo CPO (GMC) requires under 100,000 miles and under 10 years old. The program includes a 12-month/12,000-mile bumper-to-bumper warranty on top of any remaining factory coverage — not present in non-certified replacements."},
@@ -417,7 +417,7 @@ var CPO = {
   dodge:     {maxMiles:75000,  maxAge:5,  warranty:"3-month/3,000-mile Maximum Care limited warranty", note:"Dodge CPO requires under 75,000 miles and under 5 years old. The program includes a 3-month/3,000-mile Maximum Care warranty — coverage non-certified replacements do not carry."},
   jeep:      {maxMiles:75000,  maxAge:5,  warranty:"3-month/3,000-mile Maximum Care limited warranty", note:"Jeep CPO requires under 75,000 miles and under 5 years old. The program includes warranty coverage non-certified replacements do not provide."},
   ram:       {maxMiles:75000,  maxAge:5,  warranty:"3-month/3,000-mile Maximum Care limited warranty", note:"Ram CPO requires under 75,000 miles and under 5 years old. The program includes warranty coverage unavailable on non-certified replacements."},
-  nissan:    {maxMiles:100000, maxAge:7,  warranty:"6-year/100,000-mile powertrain warranty from original in-service date", note:"Nissan CPO requires under 100,000 miles and under 7 years old. The program carries a 6-year/100,000-mile powertrain warranty from original in-service date — not available on non-certified replacements."},
+  nissan:    {maxMiles:100000, maxAge:7,  warrantyTransfers:true, warranty:"6-year/100,000-mile powertrain warranty from original in-service date", note:"Nissan CPO requires under 100,000 miles and under 7 years old. The program carries a 6-year/100,000-mile powertrain warranty from original in-service date — not available on non-certified replacements."},
   infiniti:  {maxMiles:60000,  maxAge:5,  warranty:"6-year/unlimited-mile powertrain warranty from original in-service date", note:"Infiniti CPO requires under 60,000 miles and under 5 years old. The program carries a 6-year/unlimited-mile powertrain warranty from original in-service date — a benefit non-certified replacements cannot replicate."},
   volkswagen:{maxMiles:null,   maxAge:6,  warranty:"2-year/24,000-mile CPO Limited Warranty", note:"Volkswagen CPO requires under 6 years old. The program includes a 2-year/24,000-mile CPO Limited Warranty — coverage non-certified replacements do not carry."},
   volvo:     {maxMiles:null,   maxAge:6,  warranty:"1-year/unlimited-mile comprehensive warranty", note:"Volvo CPO includes 1-year/unlimited-mile comprehensive warranty coverage — a benefit non-certified replacements cannot provide."},
@@ -553,7 +553,20 @@ function isCPOCase() {
   var cpoBrand = getCPO();
   if (!cpoBrand) return false;
   if (D.purchaseType !== 'cpo' && D.purchaseType !== 'new') return false;
-  return true; // Purchased as CPO/new means it met requirements at time of purchase
+
+  // If purchased NEW and brand warranty transfers to used buyers without needing CPO,
+  // then a non-CPO replacement carries the same factory warranty — no argument applies.
+  // Only fire the CPO argument if:
+  //   1. Vehicle was purchased CPO (the CPO program adds value over standard used), OR
+  //   2. Brand's warranty does NOT transfer (Hyundai/Kia/Genesis drop from 10yr to 5yr without CPO)
+  if (D.purchaseType === 'new' && cpoBrand.warrantyTransfers) {
+    // Factory warranty transfers regardless of CPO status — no warranty loss from non-CPO replacement
+    // Exception: if current mileage/age means the vehicle could still be replaced with a CPO unit
+    // then we CAN demand CPO comps for accurate market valuation even if warranty argument is weak
+    return false;
+  }
+
+  return true;
 }
 
 // Check if current mileage exceeds the CPO powertrain warranty coverage
@@ -1155,24 +1168,3 @@ function calcSpread() {
 </script>
 </body>
 </html>
-  var STATE_FEES = {
-    MA: { salesTax: 0.0625, docFee: 799, titleFee: 5, regFee: 60, label: 'Massachusetts' },
-    CT: { salesTax: 0.0635, docFee: 399, titleFee: 25, regFee: 120, label: 'Connecticut' },
-    NY: { salesTax: 0.08,   docFee: 175, titleFee: 50, regFee: 90,  label: 'New York' },
-    RI: { salesTax: 0.07,   docFee: 299, titleFee: 20, regFee: 30,  label: 'Rhode Island' },
-    NH: { salesTax: 0.0,    docFee: 299, titleFee: 25, regFee: 55,  label: 'New Hampshire' },
-    VT: { salesTax: 0.06,   docFee: 199, titleFee: 15, regFee: 76,  label: 'Vermont' },
-    ME: { salesTax: 0.055,  docFee: 299, titleFee: 33, regFee: 35,  label: 'Maine' },
-    NJ: { salesTax: 0.06625,docFee: 499, titleFee: 60, regFee: 84,  label: 'New Jersey' },
-    PA: { salesTax: 0.06,   docFee: 499, titleFee: 58, regFee: 38,  label: 'Pennsylvania' },
-    FL: { salesTax: 0.06,   docFee: 950, titleFee: 75, regFee: 225, label: 'Florida' },
-    TX: { salesTax: 0.0625, docFee: 150, titleFee: 28, regFee: 51,  label: 'Texas' },
-    CA: { salesTax: 0.0725, docFee: 85,  titleFee: 21, regFee: 60,  label: 'California' },
-    other: { salesTax: 0.06, docFee: 399, titleFee: 30, regFee: 75, label: 'Your State' }
-  };
-  function calcTaxesAndFees(v, st) {
-    var f = STATE_FEES[st] || STATE_FEES['other'];
-    var t = Math.round(v * f.salesTax);
-    return { salesTax: t, docFee: f.docFee, titleFee: f.titleFee, regFee: f.regFee, total: t + f.docFee + f.titleFee + f.regFee, label: f.label, rate: (f.salesTax*100).toFixed(2) };
-  }
-
